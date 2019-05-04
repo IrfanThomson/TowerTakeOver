@@ -1,0 +1,53 @@
+#include "main.h"
+
+pros::Motor mleft(1);
+pros::Motor aleft(10);
+pros::Motor mright(11, true);
+pros::Motor aright(20, true);
+pros::Controller master(pros::E_CONTROLLER_MASTER);
+
+
+void PID(int goal) {
+  int error = goal;
+  float kP = 1;
+  float kI = 1.5;
+  float kD = 1;
+  float errorTotal = 0;
+  int lastError = error;
+  int dError = 1000;
+
+      while (abs(error) > 5) {
+          double RsenReading = mright.get_position();
+      //    double LsenReading = mleft.get_position();
+      //    double senReading = (RsenReading + LsenReading) / 2;
+          error = goal - RsenReading;
+          dError = lastError - error;
+          lastError = error;
+          errorTotal += error/(5*10^6);
+
+          if(abs(error) < 360){
+              errorTotal = 0;
+          }
+
+          int powerLeft = kP * error + kI * errorTotal + kD *dError;
+          int powerRight = kP * error + kI * errorTotal + kD *dError;
+          aleft = powerLeft;
+          aright = powerRight;
+          mleft = powerLeft;
+          mright = powerRight;
+
+          //printf("%d %d %d", error, mright.get_position(), powerRight);
+          pros::lcd::print(0, "%d %d %d", error, mright.get_position(), powerRight);
+
+          pros::c::delay(25);
+      }
+
+      aleft = master.get_analog(ANALOG_LEFT_Y);
+      mleft = master.get_analog(ANALOG_LEFT_Y);
+      aright = master.get_analog(ANALOG_RIGHT_Y);
+      mright = master.get_analog(ANALOG_RIGHT_Y);
+  }
+
+void autonomous() {
+  PID(1000);
+}
